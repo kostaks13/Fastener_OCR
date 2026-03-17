@@ -61,22 +61,81 @@ Her PDF için:
 
 ---
 
-### 4. Kullanım (Windows + Embedded Python)
+### 4. Kurulum ve kullanım (Windows + Embedded Python)
 
-Varsayılan klasör:
-- `C:\fastener_tool\docling_fastener_tool\...`
+#### 4.1. Klasör yapısı
 
-Adımlar:
-1. Embedded Python zip’ini `C:\fastener_tool\python_embed` içine aç.  
-2. İnternet olan bir makinede `docling` için gerekli `.whl` dosyalarını indirip `C:\fastener_tool\wheels` içine koy.  
-3. `C:\fastener_tool\docling_fastener_tool\windows_bundle\install_deps.bat` dosyasına çift tıkla (bağımlılıkları kurar).  
-4. Sonra:
-   - **Basit mod (girdi/çıktı sadece .bat üzerinden):**  
-     `windows_bundle\run_tool.bat`
-   - **Tam CLI + OCR seçimi ile:**  
-     `windows_bundle\run_cli_pdf_to_md.bat`
+Önerilen yapı:
 
-Her iki `.bat` de öncelikle `python_embed\python.exe`’yi, yoksa sistem PATH’teki `python`’ı kullanır.
+```text
+C:\
+  fastener_tool\
+    python_embed\          # Windows embeddable Python buraya açılacak
+    wheels\                # offline .whl paketleri
+    docling_fastener_tool\ # bu repo
+      windows_bundle\
+      python\
+      pdf_to_md_simple.py
+      requirements.txt
+      ...
+```
+
+#### 4.2. Embedded Python’u hazırlama
+
+1. Microsoft’tan **Windows embeddable Python** zip’ini indir (ör. Python 3.11).  
+2. Zip içeriğini `C:\fastener_tool\python_embed` klasörüne aç.  
+   - İçinde `python.exe` ve birkaç `.pyd`/`.zip` dosyası olmalı.
+
+#### 4.3. Gerekli `.whl` paketlerini indirme (internet olan makinede)
+
+1. Herhangi bir Windows makinede (veya uygun ortamda) bu repoyu aynı yapıda kullan:  
+   ```bash
+   cd docling_fastener_tool
+   pip download -r requirements.txt -d ../wheels
+   ```
+2. Bu komut, `docling` ve bağımlılıklarını `.whl` olarak `wheels` klasörüne indirir.  
+3. `wheels` klasörünü **hedef offline Windows makineye** `C:\fastener_tool\wheels` olarak kopyala.
+
+#### 4.4. Bağımlılıkları embedded Python’a kurma
+
+1. Offline Windows makinede şu klasöre git:  
+   `C:\fastener_tool\docling_fastener_tool\windows_bundle`
+2. `install_deps.bat` dosyasına çift tıkla:
+   - Önce `C:\fastener_tool\python_embed\python.exe`’i bulur,
+   - Sonra:
+     ```bat
+     python.exe -m pip install --no-index --find-links=..\wheels -r ..\requirements.txt
+     ```
+     komutunu çalıştırarak **internet olmadan** `docling`’i kurar.
+
+Kurulum bittikten sonra, Docling CLI’nin çalıştığını şu komutla test edebilirsin:
+
+```bat
+C:\fastener_tool\python_embed\python.exe -m docling --help
+```
+
+#### 4.5. PDF → MD çalıştırma (Windows)
+
+İki yolun var:
+
+- **A) Basit mod (girdi/çıktı sadece .bat üzerinden)**  
+  1. `C:\fastener_tool\docling_fastener_tool\windows_bundle\run_tool.bat` dosyasına çift tıkla.  
+  2. Konsolda:
+     - PDF klasörünü (ör. `C:\fasteners`) sorar,
+     - Çıktı klasörünü (ör. `C:\fasteners_output_md`) sorar.
+  3. `pdf_to_md_simple.py` normal (OCR kapalı) modda çalışır ve çıktı klasörüne `.md` dosyaları yazar.
+
+- **B) Tam CLI + OCR seçimi ile**  
+  1. `C:\fastener_tool\docling_fastener_tool\windows_bundle\run_cli_pdf_to_md.bat` dosyasına çift tıkla.  
+  2. Açılan konsolda:
+     - Senden **PDF klasörü** yolunu ister (ör. `C:\fasteners`).  
+     - Sonra **OCR modu** sorar:
+       - `n` → normal (OCR kapalı),
+       - `o` → `--ocr` (taranmış PDF’ler için),
+       - `f` → `--force-ocr` (her sayfayı OCR ile oku).
+     - Çıktı klasörü belirtmediysen, otomatik olarak `C:\fasteners\output_md` oluşturur ve oraya yazar.
+
+Her iki `.bat` dosyası da önce `python_embed\python.exe`’yi, yoksa PATH’teki `python`’ı kullanır; bu sayede istersen normal kurulu Python ile de çalıştırabilirsin.
 
 ---
 
